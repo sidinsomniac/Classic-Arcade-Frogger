@@ -1,5 +1,54 @@
+const Message = document.querySelector('.heading');
+let displayScore = document.querySelector('.displayScore');
+let collisionCount = document.querySelector('.collisionCount');
+let score = 0;
+let collisions = 0;
 
-const randomizer = x => Math.floor(Math.random()*x);
+const randomizer = x => Math.floor(Math.random() * x);
+
+const resetPlayer = () => {
+    player.x = 202.5;
+    player.y = 350;
+    setTimeout(function () {
+        Message.innerHTML = 'Can you beat the bugs?';
+        Message.classList.remove('messageWin', 'messageCollide');
+    }, 1000);
+}
+
+const winMessage = (me) => {
+    if (me.y < 50) {
+        Message.innerHTML = 'Yes You Can!';
+        Message.classList.add('messageWin');
+        resetPlayer();
+        score++;
+        displayScore.innerHTML = score;
+    }
+}
+
+const checkWallCollision = (me) => {
+    if (me.x < 0) {
+        me.x = 0;
+    } else if (me.x > 404) {
+        me.x = 404;
+    } else if (me.y > 435) {
+        me.y = 435;
+    }
+    winMessage(me);
+}
+
+const checkCollision = (enemy, me) => {
+    if (
+        me.y + 50 >= enemy.y
+        && me.x <= enemy.x + 50
+        && me.y <= enemy.y + 50
+        && me.x + 50 >= enemy.x) {
+        collisions++;
+        collisionCount.innerHTML = collisions;
+        resetPlayer();
+        Message.innerHTML = 'Ouch!';
+        Message.classList.add('messageCollide');
+    }
+}
 
 class Enemy {
     constructor(x, y, speed) {
@@ -11,13 +60,11 @@ class Enemy {
 
     update(dt) {
         this.x += this.speed * dt;
-        // You should multiply any movement by the dt parameter
-        // which will ensure the game runs at the same speed for
-        // all computers.
         if (this.x > 505) {
             this.x = -101;
-            this.speed = randomizer(300)+100;
+            this.speed = randomizer(300) + 200;
         }
+        checkCollision.apply(this, [this, player]);
     }
 
     render() {
@@ -25,26 +72,15 @@ class Enemy {
     }
 }
 
-// Update the enemy's position, required method for game
-// Parameter: dt, a time delta between ticks
-
-
-// Draw the enemy on the screen, required method for game
-
-
-// Now write your own player class
-// This class requires an update(), render() and
-// a handleInput() method.
-
-
 class Player {
-    constructor(x=202.5, y=380) {
+    constructor(x = 202.5, y = 350) {
         this.x = x;
         this.y = y;
         this.player = 'images/char-boy.png';
     }
 
     update() {
+        checkWallCollision.call(this, this);
     }
 
     handleInput(key) {
@@ -64,20 +100,28 @@ class Player {
     }
 }
 
-// Now instantiate your objects.
-// Place all enemy objects in an array called allEnemies
-// Place the player object in a variable called player
+const allEnemies = [];
 
-var allEnemies = [];
-var player = new Player();
+const player = new Player();
 
 for (let index = 1; index <= 3; index++) {
-    allEnemies.push(new Enemy(-101,index*85+40,randomizer(300)+100));
+    allEnemies.push(new Enemy(-101, index * 85 + 40, randomizer(150) + 150));
 }
 
+const varBug = new Enemy(-101, 210, 200);
 
-// This listens for key presses and sends the keys to your
-// Player.handleInput() method. You don't need to modify this.
+varBug.update = function (dt) {
+    this.x += this.speed * dt;
+    if (this.x > 505) {
+        this.x = -101;
+        this.y = Math.ceil(Math.random() * 3) * 85 + 40;
+        this.speed = randomizer(300) + 200;
+    }
+    checkCollision.call(this, this, player);
+}
+
+allEnemies.push(varBug);
+
 document.addEventListener('keyup', function (e) {
     var allowedKeys = {
         37: 'left',
